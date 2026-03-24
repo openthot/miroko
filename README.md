@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Miroko
 
-## Getting Started
+**Miroko** is a premium, minimalist platform designed specifically for managing production workflows, tasks, and communications between administrators and their network of producers.
 
-First, run the development server:
+Crafted by **Lethal Labs**, this application features a breathtaking, Apple-inspired aesthetic (with flawless dark/light modes, frosted glassmorphism, and responsive micro-animations).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Features
+
+- **Pristine Role-Based Architecture:** Secure layouts uniquely designed for Admins vs Producers.
+- **Task Management & Drop-box Integration:** Seamless handling of assignments with public link submission.
+- **Internal Messaging Matrix:** Producers can message the Admin securely, while the Admin can globally broadcast or direct message anyone.
+- **Transparent Payments & Awards:** Clear tracking of preferred payment channels alongside a Gamified Leaderboard for Daily/Monthly MVPs.
+- **Fully Serverless:** Engineered entirely on Next.js 14 App Router and Supabase, enabling $0/month production hosting on Vercel.
+
+## ⚙️ Tech Stack
+
+- **Frontend:** Next.js (App Router), React, Vanilla CSS (Glass UI)
+- **Backend & Database:** Supabase (PostgreSQL, Edge Functions)
+- **Authentication:** Supabase Auth (SSR Integration)
+- **Deployment:** Vercel (Auto-SSL, Global Edge CDN)
+
+## 🛠 Getting Started
+
+### 1. Database Setup
+Ensure you have a Supabase project initialized. Execute the SQL definitions found in `supabase/schema.sql` via your Supabase SQL Editor.
+
+### 2. Environment Variables
+Copy the `.env.example` into a new `.env.local` file and set the required identifiers:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Installation
+Install dependencies in your terminal:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 4. Running Locally
+Start your ultra-fast Turbopack dev server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## ⚖️ License
+Proprietary software structure. Proudly designed and developed by [Lethal Labs](https://github.com/openthot).
