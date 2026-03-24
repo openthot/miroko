@@ -46,3 +46,24 @@ npm run dev
 
 ## ⚖️ License
 Proprietary software structure. Proudly designed and developed by [Lethal Labs](https://github.com/openthot).
+
+## Miroko Supabase Admin Setup Guide
+This guide explains how to add multiple administrators to your Miroko application using the Supabase Dashboard.
+
+Miroko manages user roles natively inside the database. When users sign up, they are assigned the default producer role in the profiles table. To elevate a user to an admin, you simple need to update their role.
+
+Steps to Add an Admin
+**Log in to Supabase**: Go to supabase.com and log in to your dashboard.
+**Select your Project**: Click on the miroko project you created.
+**Open the Table Editor**: In the left sidebar, click on Table Editor (the grid icon).
+**Select the Profiles Table**: Under the public schema, select the profiles table.
+**Find the User**: Locate the row of the user you want to make an admin. You can identify them by their name or ID from the Authentication tab.
+**Edit the Role**: Double click on the cell under the role column for that user. Change the text from producer to admin.
+**Save**: Press Enter or click outside the cell. Supabase will automatically save the change.
+That's it! The next time this user logs into Miroko, they will have full admin privileges and access to the admin dashboard features.
+
+**NOTE**
+
+```
+For security, the backend logic strictly enforces that only users with the admin role in this table can perform admin-specific actions (like creating tasks or generating statistics).
+```
