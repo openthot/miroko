@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { createProducerAction, deleteUserAction } from './actions'
 
 export default async function UsersPage() {
   const supabase = await createClient()
@@ -8,62 +8,6 @@ export default async function UsersPage() {
   const isAdmin = profile?.role === 'admin'
 
   const { data: users } = await supabase.from('profiles').select('*')
-
-  async function createProducer(formData) {
-    'use server'
-    // ... code for creating user ...
-    const email = formData.get('email')
-    const password = formData.get('password')
-    const name = formData.get('name')
-    
-    const { createClient: createAdmin } = await import('@supabase/supabase-js')
-    
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("Missing SUPABASE_SERVICE_ROLE_KEY")
-      return
-    }
-
-    const adminAuthClient = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
-
-    await adminAuthClient.auth.admin.createUser({
-      email: email,
-      password: password,
-      email_confirm: true,
-      user_metadata: { name: name }
-    })
-
-    revalidatePath('/dashboard/users')
-  }
-
-  async function deleteUser(userId) {
-    'use server'
-    const supabase = await createClient()
-    const { data: { user: currentUser } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single()
-    
-    if (profile?.role !== 'admin') {
-      console.error("Unauthorized: Only admins can delete users")
-      return
-    }
-
-    const { createClient: createAdmin } = await import('@supabase/supabase-js')
-    const adminAuthClient = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
-
-    const { error } = await adminAuthClient.auth.admin.deleteUser(userId)
-    if (error) {
-      console.error("Error deleting user:", error)
-    }
-    
-    revalidatePath('/dashboard/users')
-  }
 
   return (
     <div className="animate-fade-in">
@@ -77,7 +21,7 @@ export default async function UsersPage() {
           <p style={{ color: '#86868b', fontSize: '14px', marginBottom: '16px' }}>
             Enter details to create a new producer account.
           </p>
-          <form action={createProducer} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <form action={createProducerAction} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
             <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
               <label>Name</label>
               <input name="name" className="input-control" required />
@@ -125,7 +69,7 @@ export default async function UsersPage() {
                 {isAdmin && (
                   <td style={{ padding: '0.75rem', textAlign: 'right' }}>
                     {u.id !== currentUser.id && (
-                      <form action={async () => { 'use server'; await deleteUser(u.id); }}>
+                      <form action={deleteUserAction.bind(null, u.id)}>
                         <button className="btn" style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(255, 69, 58, 0.1)', color: '#ff453a' }} type="submit">
                           Remove
                         </button>
