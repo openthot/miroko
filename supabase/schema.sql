@@ -14,8 +14,8 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 -- Create messages table
 CREATE TABLE public.messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  sender_id UUID REFERENCES public.profiles(id) NOT NULL,
-  receiver_id UUID REFERENCES public.profiles(id), -- NULL means broadcast to all
+  sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  receiver_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE, -- NULL means broadcast to all
   content TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -26,8 +26,8 @@ ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 -- Create tasks table
 CREATE TABLE public.tasks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  admin_id UUID REFERENCES public.profiles(id) NOT NULL,
-  producer_id UUID REFERENCES public.profiles(id) NOT NULL,
+  admin_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  producer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
   description TEXT,
   admin_file_url TEXT,
