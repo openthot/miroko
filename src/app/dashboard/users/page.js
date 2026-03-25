@@ -3,20 +3,23 @@ import { revalidatePath } from 'next/cache'
 
 export default async function UsersPage() {
   const supabase = await createClient()
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single()
+  const isAdmin = profile?.role === 'admin'
+
   const { data: users } = await supabase.from('profiles').select('*')
 
   async function createProducer(formData) {
     'use server'
+    // ... code for creating user ...
     const email = formData.get('email')
     const password = formData.get('password')
     const name = formData.get('name')
     
-    // We import the base client for admin actions
     const { createClient: createAdmin } = await import('@supabase/supabase-js')
     
-    // We need SUPABASE_SERVICE_ROLE_KEY in .env.local for this to work behind the scenes
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      console.error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable. Cannot create user administratively.")
+      console.error("Missing SUPABASE_SERVICE_ROLE_KEY")
       return
     }
 
@@ -26,15 +29,37 @@ export default async function UsersPage() {
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { data, error } = await adminAuthClient.auth.admin.createUser({
+    await adminAuthClient.auth.admin.createUser({
       email: email,
       password: password,
       email_confirm: true,
       user_metadata: { name: name }
     })
 
+    revalidatePath('/dashboard/users')
+  }
+
+  async function deleteUser(userId) {
+    'use server'
+    const supabase = await createClient()
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single()
+    
+    if (profile?.role !== 'admin') {
+      console.error("Unauthorized: Only admins can delete users")
+      return
+    }
+
+    const { createClient: createAdmin } = await import('@supabase/supabase-js')
+    const adminAuthClient = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    const { error } = await adminAuthClient.auth.admin.deleteUser(userId)
     if (error) {
-      console.error("Error creating user:", error)
+      console.error("Error deleting user:", error)
     }
     
     revalidatePath('/dashboard/users')
@@ -46,36 +71,39 @@ export default async function UsersPage() {
         <h1 className="page-title">User Management</h1>
       </header>
       
-      <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-        <h2>Create New Producer</h2>
-        <p style={{ color: '#86868b', fontSize: '14px', marginBottom: '16px' }}>
-          This requires you to add your <code style={{color: 'var(--primary)'}}>SUPABASE_SERVICE_ROLE_KEY</code> to `.env.local`.
-        </p>
-        <form action={createProducer} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
-            <label>Name</label>
-            <input name="name" className="input-control" required />
-          </div>
-          <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
-            <label>Email</label>
-            <input name="email" type="email" className="input-control" required />
-          </div>
-          <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
-            <label>Temporary Password</label>
-            <input name="password" type="password" className="input-control" required />
-          </div>
-          <button className="btn btn-primary" type="submit" style={{ height: '42px', flex: '1 1 150px' }}>Create Account</button>
-        </form>
-      </div>
+      {isAdmin && (
+        <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
+          <h2>Create New Producer</h2>
+          <p style={{ color: '#86868b', fontSize: '14px', marginBottom: '16px' }}>
+            Enter details to create a new producer account.
+          </p>
+          <form action={createProducer} style={{ display: 'flex', gap: '1rem', marginTop: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+              <label>Name</label>
+              <input name="name" className="input-control" required />
+            </div>
+            <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+              <label>Email</label>
+              <input name="email" type="email" className="input-control" required />
+            </div>
+            <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+              <label>Temporary Password</label>
+              <input name="password" type="password" className="input-control" required />
+            </div>
+            <button className="btn btn-primary" type="submit" style={{ height: '42px', flex: '1 1 150px' }}>Create Account</button>
+          </form>
+        </div>
+      )}
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
-        <h2>All Producers</h2>
+        <h2>All Profiles</h2>
         <table style={{ width: '100%', marginTop: '1rem', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--surface-border)' }}>
               <th style={{ padding: '0.75rem' }}>Name</th>
               <th style={{ padding: '0.75rem' }}>Role</th>
               <th style={{ padding: '0.75rem' }}>Joined</th>
+              {isAdmin && <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -84,7 +112,8 @@ export default async function UsersPage() {
                 <td style={{ padding: '0.75rem' }}>{u.name || 'Unnamed'}</td>
                 <td style={{ padding: '0.75rem' }}>
                   <span style={{ 
-                    background: u.role === 'admin' ? 'var(--primary-glow)' : 'rgba(255,255,255,0.1)', 
+                    background: u.role === 'admin' ? 'var(--primary)' : 'rgba(255,255,255,0.1)', 
+                    color: u.role === 'admin' ? '#fff' : 'inherit',
                     padding: '0.25rem 0.5rem', 
                     borderRadius: 'var(--radius-sm)',
                     fontSize: '0.8rem'
@@ -93,16 +122,23 @@ export default async function UsersPage() {
                   </span>
                 </td>
                 <td style={{ padding: '0.75rem' }}>{new Date(u.created_at).toLocaleDateString()}</td>
+                {isAdmin && (
+                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                    {u.id !== currentUser.id && (
+                      <form action={async () => { 'use server'; await deleteUser(u.id); }}>
+                        <button className="btn" style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(255, 69, 58, 0.1)', color: '#ff453a' }} type="submit">
+                          Remove
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
-            {(!users || users.length === 0) && (
-              <tr>
-                <td colSpan="3" style={{ padding: '1rem', textAlign: 'center', color: '#a1a1aa' }}>No users found. Note: You must run the schema.sql in Supabase first.</td>
-              </tr>
-            )}
           </tbody>
         </table>
       </div>
     </div>
   )
 }
+

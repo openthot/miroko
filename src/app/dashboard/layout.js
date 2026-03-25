@@ -29,6 +29,9 @@ export default async function DashboardLayout({ children }) {
             <Link href="/dashboard/users" className="nav-link">Users</Link>
           )}
           <Link href="/dashboard/messages" className="nav-link">Messages</Link>
+          {isAdmin && (
+            <Link href="/dashboard/messages?recipient=all" className="nav-link">Broadcast</Link>
+          )}
           <Link href="/dashboard/tasks" className="nav-link">Tasks</Link>
           <Link href="/dashboard/statistics" className="nav-link">Statistics</Link>
           <Link href="/dashboard/payments" className="nav-link">Payments</Link>

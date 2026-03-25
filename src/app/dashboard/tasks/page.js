@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+import TaskAssignmentForm from './TaskAssignmentForm'
+
 export default async function TasksPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -48,32 +50,7 @@ export default async function TasksPage() {
       </header>
       
       {isAdmin && (
-        <div className="glass-panel" style={{ padding: '40px', marginBottom: '40px' }}>
-          <h2 style={{ marginBottom: '24px' }}>Assign New Task</h2>
-          <form action={createTask} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="input-group" style={{ marginBottom: 0 }}>
-              <label>Assign To Producer</label>
-              <select name="producer_id" className="input-control" required>
-                {producers?.map(p => (
-                  <option key={p.id} value={p.id}>{p.name || 'Unnamed'}</option>
-                ))}
-              </select>
-            </div>
-            <div className="input-group" style={{ marginBottom: 0 }}>
-              <label>Task Title</label>
-              <input name="title" className="input-control" required />
-            </div>
-            <div className="input-group" style={{ marginBottom: 0 }}>
-              <label>Instructions / Description</label>
-              <textarea name="description" className="input-control" rows="3"></textarea>
-            </div>
-            <div className="input-group" style={{ marginBottom: 0 }}>
-              <label>Refurbished File Link (URL)</label>
-              <input name="file_url" className="input-control" placeholder="https://..." />
-            </div>
-            <button className="btn btn-primary" type="submit" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Assign Task</button>
-          </form>
-        </div>
+        <TaskAssignmentForm producers={producers || []} createTask={createTask} />
       )}
 
       <div className="glass-panel" style={{ padding: '40px' }}>

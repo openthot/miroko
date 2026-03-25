@@ -44,9 +44,6 @@ Start your ultra-fast Turbopack dev server:
 npm run dev
 ```
 
-## ⚖️ License
-Proprietary software structure. Proudly designed and developed by [Lethal Labs](https://github.com/openthot).
-
 ## Miroko Supabase Admin Setup Guide
 This guide explains how to add multiple administrators to your Miroko application using the Supabase Dashboard.
 
@@ -67,3 +64,6 @@ That's it! The next time this user logs into Miroko, they will have full admin p
 ```
 For security, the backend logic strictly enforces that only users with the admin role in this table can perform admin-specific actions (like creating tasks or generating statistics).
 ```
+
+## ⚖️ License
+Proprietary software structure. Proudly designed and developed by [Lethal Labs](https://github.com/openthot).

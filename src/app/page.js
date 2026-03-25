@@ -16,19 +16,39 @@ export default async function Home() {
       </div>
 
       {/* Navigation */}
-      <nav className="glass-panel" style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: 1200, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 32px', zIndex: 100, borderRadius: '980px' }}>
-        <div style={{ fontWeight: 600, fontSize: 20, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, background: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14 }}>M</div>
-          Miroko
-        </div>
-        <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-          <Link href="/pricing" style={{ fontSize: 15, fontWeight: 500, color: 'var(--foreground)' }}>Pricing</Link>
-          <div style={{ width: 1, height: 20, background: 'var(--surface-border)' }}></div>
-          {user ? (
-            <Link href="/dashboard" className="btn btn-primary" style={{ padding: '8px 20px', fontSize: 14 }}>Dashboard</Link>
-          ) : (
-            <Link href="/login" className="btn btn-primary" style={{ padding: '8px 20px', fontSize: 14 }}>Log in</Link>
-          )}
+      <nav className="glass-panel" style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        width: '100%', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        zIndex: 100, 
+        borderRadius: 0,
+        borderTop: 'none',
+        borderLeft: 'none',
+        borderRight: 'none',
+        height: '44px',
+        padding: '0 20px',
+        background: 'var(--surface)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)'
+      }}>
+        <div style={{ width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontWeight: 600, fontSize: 17, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 22, height: 22, background: 'var(--foreground)', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--background)', fontSize: 12 }}>M</div>
+            Miroko
+          </div>
+          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+            <Link href="/pricing" style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground)', opacity: 0.8 }}>Pricing</Link>
+            {user ? (
+              <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground)', opacity: 0.8 }}>Dashboard</Link>
+            ) : (
+              <Link href="/login" style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground)', opacity: 0.8 }}>Log in</Link>
+            )}
+          </div>
         </div>
       </nav>
 
