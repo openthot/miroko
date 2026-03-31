@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import LedgerTable from './LedgerTable'
 
 export default async function PaymentsPage() {
   const supabase = await createClient()
@@ -8,6 +9,13 @@ export default async function PaymentsPage() {
   const isAdmin = profile?.role === 'admin'
 
   const { data: producers } = await supabase.from('profiles').select('id, name, payment_method, payment_details').eq('role', 'producer')
+  
+  // Fetch incoming transactions
+  const { data: transactions } = await supabase
+    .from('transactions')
+    .select('*, profiles(name, email, artist_name, tier)')
+    .order('created_at', { ascending: false })
+
 
   async function updatePaymentDetails(formData) {
     'use server'
@@ -73,6 +81,12 @@ export default async function PaymentsPage() {
               )}
             </tbody>
           </table>
+
+          <hr style={{ margin: '40px 0', borderColor: 'var(--surface-border)', opacity: 0.5 }} />
+
+          <h2 style={{ marginBottom: '8px' }}>Incoming Revenue Ledger (Razorpay)</h2>
+          <p style={{ color: '#86868b', marginBottom: '24px', fontSize: '14px' }}>Click on a user to expand their full commercial history and premium status.</p>
+          <LedgerTable transactions={transactions || []} />
         </div>
       )}
     </div>

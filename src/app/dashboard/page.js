@@ -61,10 +61,10 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  // Get profile and role
+  // Get profile, role, tier
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('name, role, tier')
     .eq('id', user?.id)
     .single()
     
@@ -145,8 +145,24 @@ export default async function DashboardPage() {
         </div>
       </header>
       
+      {profile?.tier === 'standard' && (
+        <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', border: '1px solid var(--primary)', background: 'linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(0, 113, 227, 0) 100%)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--primary)', color: '#fff', fontSize: '11px', fontWeight: '700', borderBottomLeftRadius: '8px', letterSpacing: '1px' }}>PREMIUM</div>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--primary)' }}>Upgrade to the Artist Tier</h3>
+          <p style={{ color: '#86868b', marginBottom: '1.25rem', maxWidth: '600px', lineHeight: '1.5' }}>Unlock the <strong>Verified Badge</strong>, gain priority project allocations, remove delay penalties, and expand your maximum capacity. Step up your production career today.</p>
+          <Link href="/pricing" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px' }}>View Benefits</Link>
+        </div>
+      )}
+
       <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-        <h2>Welcome back, {user?.email}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
+          <h2 style={{ margin: 0, fontSize: '1.75rem', letterSpacing: '-0.02em' }}>Welcome back, {profile?.name || user?.email}</h2>
+          {profile?.tier === 'premium' && (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary)" xmlns="http://www.w3.org/2000/svg" title="Verified Premium">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          )}
+        </div>
         <p style={{ color: '#86868b', marginTop: '0.5rem' }}>
           This is your Miroko producer management portal. {isAdmin ? 'You are logged in as an Administrator.' : 'You can track tasks, send messages, and manage payments.'}
         </p>
