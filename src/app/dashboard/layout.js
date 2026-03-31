@@ -10,8 +10,12 @@ export default async function DashboardLayout({ children }) {
     redirect('/login')
   }
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, onboarding_completed').eq('id', user.id).single()
   const isAdmin = profile?.role === 'admin'
+
+  if (profile && !profile.onboarding_completed) {
+    redirect('/onboarding')
+  }
 
   return (
     <div className="dashboard-layout">
@@ -28,10 +32,7 @@ export default async function DashboardLayout({ children }) {
           {isAdmin && (
             <Link href="/dashboard/users" className="nav-link">Users</Link>
           )}
-          <Link href="/dashboard/messages" className="nav-link">Messages</Link>
-          {isAdmin && (
-            <Link href="/dashboard/messages?recipient=all" className="nav-link">Broadcast</Link>
-          )}
+          <Link href="/dashboard/notifications" className="nav-link">Notifications</Link>
           <Link href="/dashboard/tasks" className="nav-link">Tasks</Link>
           <Link href="/dashboard/statistics" className="nav-link">Statistics</Link>
           <Link href="/dashboard/payments" className="nav-link">Payments</Link>
