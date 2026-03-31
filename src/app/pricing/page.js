@@ -47,21 +47,21 @@ export default function PricingPage() {
 
       // 2. Initialize Razorpay Checkout
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_mock_key_12345',
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
-        name: 'Miroko / SMG',
-        description: `Upgrade: ${featureName.replace('_', ' ')}`,
-        order_id: order.mock ? undefined : order.id, 
+        name: 'Soundwave Music Group',
+        description: `Purchase: ${featureName.replace('_', ' ').toUpperCase()}`,
+        order_id: order.id,
         handler: async function (response) {
            // 3. Verify Payment
            const verifyRes = await fetch('/api/verify-payment', {
              method: 'POST',
              headers: { 'Content-Type': 'application/json' },
              body: JSON.stringify({
-               razorpay_order_id: response.razorpay_order_id || order.id, // fallback for mock
-               razorpay_payment_id: response.razorpay_payment_id || 'pay_mock_999',
-               razorpay_signature: response.razorpay_signature || 'mock_sig',
+               razorpay_order_id: response.razorpay_order_id,
+               razorpay_payment_id: response.razorpay_payment_id,
+               razorpay_signature: response.razorpay_signature,
                user_id: profile.id,
                feature: featureName,
                amount: order.amount
