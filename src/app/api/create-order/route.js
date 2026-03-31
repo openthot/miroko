@@ -3,10 +3,14 @@ import Razorpay from 'razorpay'
 
 export async function POST(req) {
   try {
-    const razorpay = new Razorpay({
-      key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '',
-      key_secret: process.env.RAZORPAY_KEY_SECRET || '',
-    })
+    const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+    const key_secret = process.env.RAZORPAY_KEY_SECRET
+
+    if (!key_id || !key_secret) {
+      throw new Error('Razorpay keys are missing from environment variables. Please restart your dev server if you recently added them.')
+    }
+
+    const razorpay = new Razorpay({ key_id, key_secret })
 
     const { amount, currency = 'INR', receipt = 'rcpt_' + Date.now() } = await req.json()
 
