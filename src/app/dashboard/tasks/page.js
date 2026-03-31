@@ -44,6 +44,7 @@ export default async function TasksPage() {
 
       await supabase.from('tasks').insert({
         project_id: project.id,
+        admin_id: user.id,
         stage: 'Composer',
         title: `Composer Stage: ${formData.get('title')}`,
         description: formData.get('description'),
@@ -68,6 +69,8 @@ export default async function TasksPage() {
     const deadline = new Date()
     deadline.setDate(deadline.getDate() + 3)
 
+    const { data: { user } } = await supabase.auth.getUser()
+
     // Update project stage
     await supabase.from('projects').update({ current_stage: next_stage === 'Completed' ? 'Completed' : next_stage, status: next_stage === 'Completed' ? 'completed' : 'active' }).eq('id', project_id)
 
@@ -75,6 +78,7 @@ export default async function TasksPage() {
       // Create next stage task
       await supabase.from('tasks').insert({
         project_id,
+        admin_id: user.id,
         stage: next_stage,
         title: `${next_stage} Stage`,
         description: `Continue production for stage: ${next_stage}`,
