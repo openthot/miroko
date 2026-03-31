@@ -35,15 +35,16 @@ async function checkAdmin() {
 
 export async function createProducerAction(formData) {
   try {
-    await checkAdmin()
+    const adminUser = await checkAdmin()
     
     const email = formData.get('email')
     const password = formData.get('password')
     const name = formData.get('name')
+    const specialization = formData.get('specialization')
     
     const adminAuthClient = getAdminClient()
 
-    const { error } = await adminAuthClient.auth.admin.createUser({
+    const { data, error } = await adminAuthClient.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
@@ -51,6 +52,14 @@ export async function createProducerAction(formData) {
     })
 
     if (error) throw error
+    
+    // Explicitly update profile created by DB trigger to bypass Onboarding flow
+    const supabase = await createClient()
+    await supabase.from('profiles').update({
+      specializations: [specialization],
+      onboarding_completed: true
+    }).eq('id', data.user.id)
+
     revalidatePath('/dashboard/users')
   } catch (err) {
     console.error("Create User Error:", err)

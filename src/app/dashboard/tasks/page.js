@@ -57,6 +57,29 @@ export default async function TasksPage() {
     revalidatePath('/dashboard/tasks')
   }
 
+  // Admin: Create Standalone Custom Task
+  async function createCustomTask(formData) {
+    'use server'
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    const stages = formData.getAll('specializations').join(', ')
+    const deadline = new Date()
+    deadline.setDate(deadline.getDate() + 3)
+
+    await supabase.from('tasks').insert({
+      admin_id: user.id,
+      stage: stages,
+      title: formData.get('title'),
+      description: formData.get('description'),
+      admin_file_url: formData.get('file_url'),
+      deadline: deadline.toISOString(),
+      producer_id: null
+    })
+    
+    revalidatePath('/dashboard/tasks')
+  }
+
   // Admin: Approve & Advance Stage
   async function advanceStage(formData) {
     'use server'
@@ -159,8 +182,8 @@ export default async function TasksPage() {
   const getNextStage = (current) => STAGES[STAGES.indexOf(current) + 1]
 
   const myTasks = allTasks?.filter(t => t.producer_id === user.id) || []
-  const availableTasks = allTasks?.filter(t => !t.producer_id && t.stage === userSpecialization && t.status !== 'completed') || []
-  const allOtherTasks = allTasks?.filter(t => !t.producer_id && t.stage !== userSpecialization && t.status !== 'completed') || []
+  const availableTasks = allTasks?.filter(t => !t.producer_id && t.stage?.includes(userSpecialization) && t.status !== 'completed') || []
+  const allOtherTasks = allTasks?.filter(t => !t.producer_id && !t.stage?.includes(userSpecialization) && t.status !== 'completed') || []
 
   return (
     <div className="animate-fade-in">
@@ -185,6 +208,41 @@ export default async function TasksPage() {
               <input name="file_url" className="input-control" placeholder="https://..." />
             </div>
             <button className="btn btn-primary" type="submit" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Initiate Project Pipeline</button>
+          </form>
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="glass-panel" style={{ padding: '40px', marginBottom: '40px' }}>
+          <h2 style={{ marginBottom: '8px' }}>Create Custom Standalone Task</h2>
+          <p style={{ color: '#86868b', marginBottom: '24px', fontSize: '14px' }}>Bypass the pipeline and dispatch an independent task directly to specific specializations.</p>
+          <form action={createCustomTask} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label>Task Title</label>
+              <input name="title" className="input-control" required placeholder="E.g., Emergency Vocal Edit" />
+            </div>
+            
+            <div className="input-group" style={{ marginBottom: '8px' }}>
+              <label style={{ marginBottom: '12px', display: 'block' }}>Target Specializations</label>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                {STAGES.filter(s => s !== 'Completed').map(st => (
+                  <label key={st} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <input type="checkbox" name="specializations" value={st} />
+                    <span style={{ fontSize: '14px' }}>{st}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label>Instructions & Specs</label>
+              <textarea name="description" className="input-control" rows="3" required></textarea>
+            </div>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label>Asset Link (URL)</label>
+              <input name="file_url" className="input-control" placeholder="https://..." />
+            </div>
+            <button className="btn btn-secondary" type="submit" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Dispatch Custom Task</button>
           </form>
         </div>
       )}

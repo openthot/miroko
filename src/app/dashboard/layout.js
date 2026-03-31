@@ -38,6 +38,7 @@ export default async function DashboardLayout({ children }) {
           <Link href="/dashboard/statistics" className="nav-link">Statistics</Link>
           <Link href="/dashboard/payments" className="nav-link">Payments</Link>
           <Link href="/dashboard/awards" className="nav-link">Awards</Link>
+          <Link href="/dashboard/support" className="nav-link">Support & Docs</Link>
         </nav>
 
         <div style={{ marginTop: 'auto', padding: '24px', fontSize: '13px', color: '#86868b', textAlign: 'center', borderTop: '1px solid var(--surface-border)' }}>

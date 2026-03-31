@@ -34,7 +34,17 @@ export default async function UsersPage() {
               <label>Temporary Password</label>
               <input name="password" type="password" className="input-control" required />
             </div>
-            <button className="btn btn-primary" type="submit" style={{ height: '42px', flex: '1 1 150px' }}>Create Account</button>
+            <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
+              <label>Assign Specialization</label>
+              <select name="specialization" className="input-control" required style={{ width: '100%', padding: '10px', background: 'var(--secondary)', color: 'var(--foreground)', border: '1px solid var(--surface-border)', borderRadius: 'var(--radius-sm)' }}>
+                <option value="Composer">Composer</option>
+                <option value="Sound Designer">Sound Designer</option>
+                <option value="Arranger">Arranger</option>
+                <option value="FX Mixer">FX Mixer</option>
+                <option value="Mastering Engineer">Mastering</option>
+              </select>
+            </div>
+            <button className="btn btn-primary" type="submit" style={{ height: '42px', flex: '1 1 150px' }}>Provision Account</button>
           </form>
         </div>
       )}
