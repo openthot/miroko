@@ -113,6 +113,28 @@ export default async function TasksPage() {
     revalidatePath('/dashboard/tasks')
   }
 
+  // Admin: Delete Project
+  async function deleteProject(formData) {
+    'use server'
+    const supabase = await createClient()
+    const project_id = formData.get('project_id')
+    await supabase.from('projects').delete().eq('id', project_id)
+    revalidatePath('/dashboard/tasks')
+  }
+
+  // Admin: Mark Project as Completed manually
+  async function markProjectCompleted(formData) {
+    'use server'
+    const supabase = await createClient()
+    const project_id = formData.get('project_id')
+    await supabase.from('projects').update({ status: 'completed', current_stage: 'Completed' }).eq('id', project_id)
+    
+    // Also mark active tasks as completed to clean up the queue
+    await supabase.from('tasks').update({ status: 'completed' }).eq('project_id', project_id).neq('status', 'completed')
+    
+    revalidatePath('/dashboard/tasks')
+  }
+
   // Producer: Accept an Available Task
   async function acceptTask(formData) {
     'use server'
@@ -253,15 +275,31 @@ export default async function TasksPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {projects?.map(p => (
               <div key={p.id} style={{ padding: '24px', background: 'var(--secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--surface-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
                   <strong style={{ fontSize: '20px' }}>{p.title}</strong>
-                  <span style={{ 
-                    background: p.status === 'completed' ? 'var(--success)' : 'var(--primary)', 
-                    color: p.status === 'completed' ? '#fff' : '#000', 
-                    padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '500' 
-                  }}>
-                    {p.current_stage.toUpperCase()}
-                  </span>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <span style={{ 
+                      background: p.status === 'completed' ? 'var(--success)' : 'var(--primary)', 
+                      color: p.status === 'completed' ? '#fff' : '#000', 
+                      padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '500' 
+                    }}>
+                      {p.current_stage.toUpperCase()}
+                    </span>
+                    
+                    <form action={markProjectCompleted} style={{ display: 'inline' }}>
+                      <input type="hidden" name="project_id" value={p.id} />
+                      <button type="submit" disabled={p.status === 'completed'} className="btn" style={{ padding: '4px 10px', fontSize: '11px', background: p.status === 'completed' ? 'rgba(255,255,255,0.1)' : 'rgba(52, 199, 89, 0.1)', color: p.status === 'completed' ? '#86868b' : '#34c759' }}>
+                        {p.status === 'completed' ? 'Finished' : 'Mark Done'}
+                      </button>
+                    </form>
+
+                    <form action={deleteProject} style={{ display: 'inline' }, { marginLeft: '4px' }}>
+                      <input type="hidden" name="project_id" value={p.id} />
+                      <button type="submit" className="btn" style={{ padding: '4px 10px', fontSize: '11px', background: 'rgba(255, 69, 58, 0.1)', color: '#ff453a' }}>
+                        Delete
+                      </button>
+                    </form>
+                  </div>
                 </div>
                 
                 <h4 style={{ marginBottom: '12px', color: '#86868b' }}>Project Stages:</h4>
