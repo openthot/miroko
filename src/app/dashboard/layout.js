@@ -29,6 +29,7 @@ export default async function DashboardLayout({ children }) {
         </div>
         <nav className="nav-links">
           <Link href="/dashboard" className="nav-link">Dashboard</Link>
+          <Link href="/dashboard/profile" className="nav-link">My Profile</Link>
           {isAdmin && (
             <Link href="/dashboard/users" className="nav-link">Users</Link>
           )}
