@@ -56,14 +56,14 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card" style={{ maxWidth: '500px' }}>
-        <h1 className="login-title">Complete Your Profile</h1>
-        <p className="login-subtitle">Please provide your details to access the platform.</p>
+    <div className="auth-container animate-fade-in">
+      <div className="glass-panel auth-card" style={{ maxWidth: '600px', width: '100%', padding: '48px 32px' }}>
+        <h1 className="auth-title">Complete Your Profile</h1>
+        <p className="auth-subtitle">Please provide your details to access the platform.</p>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--error)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--radius-md)', marginBottom: '20px', textAlign: 'center', fontSize: '14px' }}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit}>
           <div className="input-group">
             <label htmlFor="legal_name">Legal Full Name</label>
             <input
@@ -144,10 +144,14 @@ export default function Onboarding() {
             </label>
           </div>
 
-          <button type="submit" className="login-button" disabled={loading}>
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }} disabled={loading}>
             {loading ? 'Submitting...' : 'Complete Onboarding'}
           </button>
         </form>
+
+        <div style={{ marginTop: '30px', textAlign: 'center', fontSize: '13px', color: '#86868b' }}>
+          By continuing, you agree to the <strong style={{ color: 'var(--foreground)' }}>Soundwave Music Group</strong> platform policies.
+        </div>
       </div>
     </div>
   )
