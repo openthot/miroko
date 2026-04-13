@@ -135,6 +135,12 @@ export default async function TasksPage() {
   async function deleteProject(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
     const project_id = formData.get('project_id')
     await supabase.from('projects').delete().eq('id', project_id)
     revalidatePath('/dashboard/tasks')
