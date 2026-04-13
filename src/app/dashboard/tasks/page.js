@@ -1,11 +1,10 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, getUserAndProfile } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 // Note: Ensure your Supabase includes the new "projects" table and updated "tasks" schema!
 export default async function TasksPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('role, specializations, tier').eq('id', user.id).single()
+  const { user, profile } = await getUserAndProfile()
   const isAdmin = profile?.role === 'admin'
   const userSpecialization = profile?.specializations?.[0]
 
@@ -35,7 +34,7 @@ export default async function TasksPage() {
   async function createProject(formData) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { user } = await getUserAndProfile()
     
     const stage_deadlines = {
       'Composer': parseInt(formData.get('deadline_Composer')) || 3,
@@ -77,7 +76,7 @@ export default async function TasksPage() {
   async function createCustomTask(formData) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { user } = await getUserAndProfile()
     
     const stages = formData.getAll('specializations').join(', ')
     const deadlineDays = parseInt(formData.get('deadline_days')) || 3
@@ -105,6 +104,10 @@ export default async function TasksPage() {
     const next_stage = formData.get('next_stage')
     const file_url = formData.get('file_url') // the returned file from the previous stage
     
+    const deadline = new Date()
+    deadline.setDate(deadline.getDate() + 3)
+
+    const { user } = await getUserAndProfile()
     const { data: { user } } = await supabase.auth.getUser()
 
     // Get the project's stage_deadlines
@@ -184,11 +187,11 @@ export default async function TasksPage() {
   async function acceptTask(formData) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { user } = await getUserAndProfile()
     const task_id = formData.get('task_id')
 
     // Enforce limits
-    const { data: profile } = await supabase.from('profiles').select('tier').eq('id', user.id).single()
+    const { profile } = await getUserAndProfile()
     const isPremium = profile?.tier === 'premium'
     const maxProjects = isPremium ? 5 : 2
 
@@ -228,7 +231,7 @@ export default async function TasksPage() {
   async function completeTask(formData) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { user } = await getUserAndProfile()
     const task_id = formData.get('task_id')
     const producer_file_url = formData.get('producer_file_url')
     
@@ -242,7 +245,7 @@ export default async function TasksPage() {
     }
 
     // Premium tier is exempt from delay penalties
-    const { data: profile } = await supabase.from('profiles').select('tier').eq('id', user.id).single()
+    const { profile } = await getUserAndProfile()
     if (profile?.tier === 'premium') {
       penalty = 0
     }
