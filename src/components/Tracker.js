@@ -12,6 +12,9 @@ export default function Tracker() {
     // Basic user details tracking using ipapi
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
+      .then(data => {
+        // Tracker fetch resolves silently
+      })
       .catch(err => console.error('[Tracking] IPAPI error:', err));
   }, []);
 
