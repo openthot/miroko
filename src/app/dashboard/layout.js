@@ -1,16 +1,13 @@
-import { createClient } from '@/utils/supabase/server'
+import { getUserAndProfile } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
 export default async function DashboardLayout({ children }) {
-  const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const { user, profile } = await getUserAndProfile()
 
-  if (error || !user) {
+  if (!user) {
     redirect('/login')
   }
-
-  const { data: profile } = await supabase.from('profiles').select('role, onboarding_completed').eq('id', user.id).single()
   const isAdmin = profile?.role === 'admin'
 
   if (profile && !profile.onboarding_completed) {

@@ -1,10 +1,9 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, getUserAndProfile } from '@/utils/supabase/server'
 import { createProducerAction, deleteUserAction } from './actions'
 
 export default async function UsersPage() {
   const supabase = await createClient()
-  const { data: { user: currentUser } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single()
+  const { user: currentUser, profile } = await getUserAndProfile()
   const isAdmin = profile?.role === 'admin'
 
   const { data: users } = await supabase.from('profiles').select('*')

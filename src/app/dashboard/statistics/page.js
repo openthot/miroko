@@ -1,10 +1,9 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, getUserAndProfile } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export default async function StatisticsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { profile } = await getUserAndProfile()
   const isAdmin = profile?.role === 'admin'
 
   const { data: stats } = await supabase.from('statistics').select('*').order('created_at', { ascending: false })
@@ -12,7 +11,7 @@ export default async function StatisticsPage() {
   async function uploadStats(formData) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { user } = await getUserAndProfile()
     
     await supabase.from('statistics').insert({
       admin_id: user.id,

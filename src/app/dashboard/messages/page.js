@@ -1,12 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, getUserAndProfile } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import Link from 'next/link'
 
 export default async function MessagesPage({ searchParams }) {
   const { recipient, search } = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+  const { user, profile } = await getUserAndProfile()
   const isAdmin = profile?.role === 'admin'
 
   // Fetch recipients list
@@ -50,8 +49,7 @@ export default async function MessagesPage({ searchParams }) {
   async function sendMessage(formData) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const { user, profile } = await getUserAndProfile()
     
     const recId = formData.get('receiver_id')
     const content = formData.get('content')
