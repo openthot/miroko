@@ -28,6 +28,11 @@ export default async function TasksPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') {
+      throw new Error("Unauthorized")
+    }
+
     // 1. Create Project
     const { data: project } = await supabase.from('projects').insert({
       admin_id: user.id,
@@ -63,6 +68,11 @@ export default async function TasksPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') {
+      throw new Error("Unauthorized")
+    }
+
     const stages = formData.getAll('specializations').join(', ')
     const deadline = new Date()
     deadline.setDate(deadline.getDate() + 3)
@@ -94,6 +104,11 @@ export default async function TasksPage() {
 
     const { data: { user } } = await supabase.auth.getUser()
 
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') {
+      throw new Error("Unauthorized")
+    }
+
     // Update project stage
     await supabase.from('projects').update({ current_stage: next_stage === 'Completed' ? 'Completed' : next_stage, status: next_stage === 'Completed' ? 'completed' : 'active' }).eq('id', project_id)
 
@@ -117,6 +132,13 @@ export default async function TasksPage() {
   async function deleteProject(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') {
+      throw new Error("Unauthorized")
+    }
+
     const project_id = formData.get('project_id')
     await supabase.from('projects').delete().eq('id', project_id)
     revalidatePath('/dashboard/tasks')
@@ -126,6 +148,13 @@ export default async function TasksPage() {
   async function markProjectCompleted(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') {
+      throw new Error("Unauthorized")
+    }
+
     const project_id = formData.get('project_id')
     await supabase.from('projects').update({ status: 'completed', current_stage: 'Completed' }).eq('id', project_id)
     
