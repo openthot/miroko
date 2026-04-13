@@ -16,13 +16,7 @@ export default function Tracker() {
     fetch('https://ipapi.co/json/')
       .then(res => res.json())
       .then(data => {
-        console.log('[Tracking] User details:', {
-          ip: data.ip,
-          city: data.city,
-          region: data.region,
-          country: data.country_name,
-          org: data.org
-        });
+        // Tracker fetch resolves silently
       })
       .catch(err => console.error('[Tracking] IPAPI error:', err));
   }, []);

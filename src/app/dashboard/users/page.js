@@ -1,5 +1,6 @@
 import { createClient, getUserAndProfile } from '@/utils/supabase/server'
 import { createProducerAction, deleteUserAction } from './actions'
+import { PASSWORD_REQUIREMENTS } from '@/utils/password-validation'
 
 export default async function UsersPage() {
   const supabase = await createClient()
@@ -32,6 +33,7 @@ export default async function UsersPage() {
             <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
               <label>Temporary Password</label>
               <input name="password" type="password" className="input-control" required />
+              <p style={{ fontSize: '11px', color: '#86868b', marginTop: '4px', maxWidth: '200px' }}>{PASSWORD_REQUIREMENTS}</p>
             </div>
             <div className="input-group" style={{ marginBottom: 0, flex: '1 1 200px' }}>
               <label>Assign Specialization</label>

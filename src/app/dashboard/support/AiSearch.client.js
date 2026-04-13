@@ -1,11 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 export default function AiSearch({ docs }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [isSearching, setIsSearching] = useState(false)
+
+  const searchableDocs = useMemo(() => {
+    return docs.map(section => ({
+      ...section,
+      searchableText: (section.title + ' ' + section.content).toLowerCase()
+    }))
+  }, [docs])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -18,9 +25,9 @@ export default function AiSearch({ docs }) {
       const keywords = query.toLowerCase().split(' ').filter(w => w.length > 2)
       
       let matches = []
-      docs.forEach(section => {
+      searchableDocs.forEach(section => {
         let score = 0
-        const textToSearch = (section.title + ' ' + section.content).toLowerCase()
+        const textToSearch = section.searchableText
         keywords.forEach(kw => {
           if (textToSearch.includes(kw)) score++
         })
