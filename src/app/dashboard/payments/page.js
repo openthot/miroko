@@ -1,10 +1,11 @@
-import { createClient, getUserAndProfile } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import LedgerTable from './LedgerTable'
 
 export default async function PaymentsPage() {
   const supabase = await createClient()
-  const { user, profile } = await getUserAndProfile()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   const isAdmin = profile?.role === 'admin'
 
   const { data: producers } = await supabase.from('profiles').select('id, name, payment_method, payment_details').eq('role', 'producer')
@@ -19,7 +20,7 @@ export default async function PaymentsPage() {
   async function updatePaymentDetails(formData) {
     'use server'
     const supabase = await createClient()
-    const { user } = await getUserAndProfile()
+    const { data: { user } } = await supabase.auth.getUser()
     
     await supabase.from('profiles').update({
       payment_method: formData.get('payment_method'),
