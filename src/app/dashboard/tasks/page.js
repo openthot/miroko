@@ -15,6 +15,15 @@ export default async function TasksPage() {
     .select('*, tasks(*, profiles!producer_id(name))')
     .order('created_at', { ascending: false })
 
+  // Pre-sort project tasks to avoid sorting inside render loop and string comparison avoids new Date allocations
+  if (projects) {
+    projects.forEach(p => {
+      if (p.tasks) {
+        p.tasks.sort((a, b) => (a.created_at < b.created_at ? -1 : (a.created_at > b.created_at ? 1 : 0)))
+      }
+    })
+  }
+
   // For Producers: Fetch all tasks (available + assigned)
   // To handle legacy tasks without projects, we use an outer join if needed, but since we are fetching from tasks directly it's fine.
   const { data: allTasks } = await supabase
@@ -27,10 +36,18 @@ export default async function TasksPage() {
     'use server'
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     if (profile?.role !== 'admin') {
       throw new Error("Unauthorized")
+    }
+
+    const stage_deadlines = {
+      'Composer': parseInt(formData.get('deadline_Composer')) || 3,
+      'Sound Designer': parseInt(formData.get('deadline_Sound Designer')) || 3,
+      'Arranger': parseInt(formData.get('deadline_Arranger')) || 3,
+      'FX Mixer': parseInt(formData.get('deadline_FX Mixer')) || 3,
+      'Mastering Engineer': parseInt(formData.get('deadline_Mastering Engineer')) || 3,
     }
 
     // 1. Create Project
@@ -38,15 +55,13 @@ export default async function TasksPage() {
       admin_id: user.id,
       title: formData.get('title'),
       current_stage: 'Composer',
-      status: 'active'
+      status: 'active',
+      stage_deadlines: stage_deadlines
     }).select().single()
 
     if (project) {
       // 2. Create initial Composer Task
-      // Deadlines: standard is given 3 days. We can calculate this. Wait, let's just leave it null for now, or add 3 days.
-      const deadline = new Date()
-      deadline.setDate(deadline.getDate() + 3)
-
+      // Deadline will be calculated when the task is accepted.
       await supabase.from('tasks').insert({
         project_id: project.id,
         admin_id: user.id,
@@ -54,7 +69,8 @@ export default async function TasksPage() {
         title: `Composer Stage: ${formData.get('title')}`,
         description: formData.get('description'),
         admin_file_url: formData.get('file_url'),
-        deadline: deadline.toISOString(),
+        deadline_days: stage_deadlines['Composer'],
+        deadline: null, // Set upon acceptance
         producer_id: null // Unassigned
       })
     }
@@ -74,8 +90,7 @@ export default async function TasksPage() {
     }
 
     const stages = formData.getAll('specializations').join(', ')
-    const deadline = new Date()
-    deadline.setDate(deadline.getDate() + 3)
+    const deadlineDays = parseInt(formData.get('deadline_days')) || 3
 
     await supabase.from('tasks').insert({
       admin_id: user.id,
@@ -83,7 +98,8 @@ export default async function TasksPage() {
       title: formData.get('title'),
       description: formData.get('description'),
       admin_file_url: formData.get('file_url'),
-      deadline: deadline.toISOString(),
+      deadline_days: deadlineDays,
+      deadline: null, // Set upon acceptance
       producer_id: null
     })
     
@@ -99,15 +115,16 @@ export default async function TasksPage() {
     const next_stage = formData.get('next_stage')
     const file_url = formData.get('file_url') // the returned file from the previous stage
     
-    const deadline = new Date()
-    deadline.setDate(deadline.getDate() + 3)
-
     const { data: { user } } = await supabase.auth.getUser()
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
     if (profile?.role !== 'admin') {
       throw new Error("Unauthorized")
     }
+
+    // Get the project's stage_deadlines
+    const { data: project } = await supabase.from('projects').select('stage_deadlines').eq('id', project_id).single()
+    const deadlineDays = project?.stage_deadlines?.[next_stage] || 3
 
     // Update project stage
     await supabase.from('projects').update({ current_stage: next_stage === 'Completed' ? 'Completed' : next_stage, status: next_stage === 'Completed' ? 'completed' : 'active' }).eq('id', project_id)
@@ -121,7 +138,8 @@ export default async function TasksPage() {
         title: `${next_stage} Stage`,
         description: `Continue production for stage: ${next_stage}`,
         admin_file_url: file_url,
-        deadline: deadline.toISOString(),
+        deadline_days: deadlineDays,
+        deadline: null, // Set upon acceptance
         producer_id: null
       })
     }
@@ -164,6 +182,33 @@ export default async function TasksPage() {
     revalidatePath('/dashboard/tasks')
   }
 
+  // Admin: Revert Task for Edit
+  async function revertTask(formData) {
+    'use server'
+    const supabase = await createClient()
+    const task_id = formData.get('task_id')
+    const edit_reason = formData.get('edit_reason')
+    const new_deadline_days = parseInt(formData.get('new_deadline_days')) || 3
+
+    const { data: task } = await supabase.from('tasks').select('description').eq('id', task_id).single()
+    const newDescription = `${task?.description || ''}\n\n[ADMIN EDIT REQUEST]: ${edit_reason}`
+
+    const newDeadline = new Date()
+    newDeadline.setDate(newDeadline.getDate() + new_deadline_days)
+
+    await supabase.from('tasks').update({
+      status: 'in_progress',
+      description: newDescription,
+      deadline_days: new_deadline_days,
+      deadline: newDeadline.toISOString(),
+      producer_file_url: null, // Clear the previous submission
+      delay_penalty: 0,
+      deadline_waived: false
+    }).eq('id', task_id)
+
+    revalidatePath('/dashboard/tasks')
+  }
+
   // Producer: Accept an Available Task
   async function acceptTask(formData) {
     'use server'
@@ -191,8 +236,20 @@ export default async function TasksPage() {
       return
     }
 
-    // Lock the task to this user
-    await supabase.from('tasks').update({ producer_id: user.id, status: 'in_progress' }).eq('id', task_id).is('producer_id', null)
+    // Get the task's deadline_days
+    const { data: taskData } = await supabase.from('tasks').select('deadline_days').eq('id', task_id).single()
+    const days = taskData?.deadline_days || 3
+
+    const newDeadline = new Date()
+    newDeadline.setDate(newDeadline.getDate() + Number(days))
+
+    // Lock the task to this user and set deadline
+    await supabase.from('tasks').update({
+      producer_id: user.id,
+      status: 'in_progress',
+      deadline: newDeadline.toISOString()
+    }).eq('id', task_id).is('producer_id', null)
+
     revalidatePath('/dashboard/tasks')
   }
 
@@ -205,9 +262,9 @@ export default async function TasksPage() {
     const producer_file_url = formData.get('producer_file_url')
     
     // Calculate delay penalty ($1/day)
-    const { data: task } = await supabase.from('tasks').select('deadline').eq('id', task_id).single()
+    const { data: task } = await supabase.from('tasks').select('deadline, deadline_waived').eq('id', task_id).single()
     let penalty = 0
-    if (task?.deadline) {
+    if (task?.deadline && !task.deadline_waived) {
       const diffTime = Math.max(0, new Date() - new Date(task.deadline))
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       if (diffDays > 0) penalty = diffDays
@@ -225,6 +282,27 @@ export default async function TasksPage() {
       delay_penalty: penalty
     }).eq('id', task_id).eq('producer_id', user.id)
     
+    revalidatePath('/dashboard/tasks')
+  }
+
+  // Producer: Waive Deadline ($5)
+  async function waiveDeadline(formData) {
+    'use server'
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    const task_id = formData.get('task_id')
+
+    // In a real app, this would integrate with Razorpay/Stripe here.
+    // We assume the payment is successful and update the task.
+    await supabase.from('transactions').insert({
+      user_id: user.id,
+      amount: 5,
+      currency: 'USD',
+      feature_purchased: 'deadline_waiver',
+      status: 'completed'
+    })
+
+    await supabase.from('tasks').update({ deadline_waived: true }).eq('id', task_id).eq('producer_id', user.id)
     revalidatePath('/dashboard/tasks')
   }
 
@@ -258,6 +336,19 @@ export default async function TasksPage() {
               <label>Initial Stem/Resource Link (URL)</label>
               <input name="file_url" className="input-control" placeholder="https://..." />
             </div>
+
+            <div className="input-group" style={{ marginBottom: '8px' }}>
+              <label style={{ marginBottom: '12px', display: 'block' }}>Stage Deadlines (Days)</label>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                {STAGES.filter(s => s !== 'Completed').map(st => (
+                  <div key={st} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <label style={{ fontSize: '14px', width: '120px' }}>{st}</label>
+                    <input type="number" name={`deadline_${st}`} className="input-control" defaultValue={3} min={1} style={{ width: '80px', padding: '4px' }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <button className="btn btn-primary" type="submit" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Initiate Project Pipeline</button>
           </form>
         </div>
@@ -292,6 +383,10 @@ export default async function TasksPage() {
             <div className="input-group" style={{ marginBottom: 0 }}>
               <label>Asset Link (URL)</label>
               <input name="file_url" className="input-control" placeholder="https://..." />
+            </div>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label>Deadline (Days)</label>
+              <input type="number" name="deadline_days" className="input-control" defaultValue={3} min={1} style={{ width: '100px' }} />
             </div>
             <button className="btn btn-secondary" type="submit" style={{ alignSelf: 'flex-start', marginTop: '10px' }}>Dispatch Custom Task</button>
           </form>
@@ -333,7 +428,7 @@ export default async function TasksPage() {
                 
                 <h4 style={{ marginBottom: '12px', color: '#86868b' }}>Project Stages:</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {p.tasks?.sort((a,b) => new Date(a.created_at) - new Date(b.created_at)).map(t => (
+                  {p.tasks?.map(t => (
                     <div key={t.id} style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', borderLeft: `3px solid ${t.status === 'completed' ? 'var(--success)' : 'var(--warning)'}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                         <div>
@@ -343,18 +438,27 @@ export default async function TasksPage() {
                             Status: {t.status}
                           </span>
                         </div>
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                           {t.producer_file_url && (
                              <a href={t.producer_file_url} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px', borderColor: 'var(--success)' }}>📥 View Work</a>
                           )}
                           {t.status === 'completed' && t.stage === p.current_stage && t.stage !== 'Completed' && p.status !== 'completed' && (
-                             <form action={advanceStage}>
-                               <input type="hidden" name="project_id" value={p.id} />
-                               <input type="hidden" name="current_stage" value={t.stage} />
-                               <input type="hidden" name="next_stage" value={getNextStage(t.stage)} />
-                               <input type="hidden" name="file_url" value={t.producer_file_url} />
-                               <button className="btn btn-primary" type="submit" style={{ padding: '6px 12px', fontSize: '12px' }}>Advance to {getNextStage(t.stage)}</button>
-                             </form>
+                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                               <form action={advanceStage}>
+                                 <input type="hidden" name="project_id" value={p.id} />
+                                 <input type="hidden" name="current_stage" value={t.stage} />
+                                 <input type="hidden" name="next_stage" value={getNextStage(t.stage)} />
+                                 <input type="hidden" name="file_url" value={t.producer_file_url} />
+                                 <button className="btn btn-primary" type="submit" style={{ padding: '6px 12px', fontSize: '12px' }}>Advance to {getNextStage(t.stage)}</button>
+                               </form>
+
+                               <form action={revertTask} style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                 <input type="hidden" name="task_id" value={t.id} />
+                                 <input type="text" name="edit_reason" placeholder="Reason for edit..." required className="input-control" style={{ padding: '4px 8px', fontSize: '11px', width: '150px' }} />
+                                 <input type="number" name="new_deadline_days" placeholder="Days" required min="1" className="input-control" style={{ padding: '4px 8px', fontSize: '11px', width: '60px' }} />
+                                 <button className="btn btn-secondary" type="submit" style={{ padding: '4px 10px', fontSize: '11px', borderColor: 'var(--warning)', color: 'var(--warning)' }}>Revert</button>
+                               </form>
+                             </div>
                           )}
                         </div>
                       </div>
@@ -388,6 +492,17 @@ export default async function TasksPage() {
                       <a href={t.admin_file_url} target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '6px 14px', fontSize: '13px' }}>Download Resources</a>
                     )}
                     
+                    {t.status !== 'completed' && !t.deadline_waived && (
+                      <form action={waiveDeadline}>
+                        <input type="hidden" name="task_id" value={t.id} />
+                        <button className="btn btn-secondary" type="submit" style={{ padding: '6px 14px', fontSize: '13px', borderColor: 'var(--warning)', color: 'var(--warning)' }}>Waive Deadline ($5)</button>
+                      </form>
+                    )}
+
+                    {t.status !== 'completed' && t.deadline_waived && (
+                      <span style={{ fontSize: '13px', color: 'var(--warning)', padding: '6px 14px', border: '1px solid var(--warning)', borderRadius: 'var(--radius-md)' }}>Deadline Waived</span>
+                    )}
+
                     {t.status !== 'completed' ? (
                       <form action={completeTask} style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
                         <input type="hidden" name="task_id" value={t.id} />
