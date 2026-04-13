@@ -1,9 +1,10 @@
-import { createClient, getUserAndProfile } from '@/utils/supabase/server'
+import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export default async function NotificationsPage() {
   const supabase = await createClient()
-  const { user, profile } = await getUserAndProfile()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   const isAdmin = profile?.role === 'admin'
 
   // Fetch notifications for the user
