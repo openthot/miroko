@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
+import { validatePassword, PASSWORD_REQUIREMENTS } from '@/utils/password-validation'
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -69,8 +70,8 @@ export default function ProfilePage() {
       setError('Passwords do not match.')
       return
     }
-    if (passwords.new_password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (!validatePassword(passwords.new_password)) {
+      setError(PASSWORD_REQUIREMENTS)
       return
     }
 
@@ -149,6 +150,7 @@ export default function ProfilePage() {
             <div className="input-group" style={{ marginBottom: 0 }}>
               <label>New Password</label>
               <input className="input-control" type="password" required value={passwords.new_password} onChange={e => setPasswords({...passwords, new_password: e.target.value})} />
+              <p style={{ fontSize: '12px', color: '#86868b', marginTop: '4px' }}>{PASSWORD_REQUIREMENTS}</p>
             </div>
             <div className="input-group" style={{ marginBottom: 0 }}>
               <label>Confirm New Password</label>
