@@ -3,6 +3,7 @@
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
+import { validatePassword, PASSWORD_REQUIREMENTS } from '@/utils/password-validation'
 
 // Initialize Admin Client once to avoid memory leaks and re-creation issues
 let adminClient;
@@ -41,6 +42,10 @@ export async function createProducerAction(formData) {
     const password = formData.get('password')
     const name = formData.get('name')
     const specialization = formData.get('specialization')
+
+    if (!validatePassword(password)) {
+      throw new Error(PASSWORD_REQUIREMENTS)
+    }
     
     const adminAuthClient = getAdminClient()
 
