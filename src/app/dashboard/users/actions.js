@@ -1,8 +1,8 @@
 'use server'
 
-import { createClient as createAdmin } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/utils/supabase/server'
+import { createClient as createServerClient } from '@/utils/supabase/server'
 
 // Initialize Admin Client once to avoid memory leaks and re-creation issues
 let adminClient;
@@ -13,7 +13,7 @@ const getAdminClient = () => {
     throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY")
   }
   
-  adminClient = createAdmin(
+  adminClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
     { auth: { autoRefreshToken: false, persistSession: false } }
@@ -22,7 +22,7 @@ const getAdminClient = () => {
 }
 
 async function checkAdmin() {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Not authenticated")
   
@@ -54,7 +54,7 @@ export async function createProducerAction(formData) {
     if (error) throw error
     
     // Explicitly update profile created by DB trigger to bypass Onboarding flow
-    const supabase = await createClient()
+    const supabase = await createServerClient()
     await supabase.from('profiles').update({
       specializations: [specialization],
       onboarding_completed: true
