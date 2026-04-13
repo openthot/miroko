@@ -24,11 +24,16 @@ const getAdminClient = () => {
 
 async function checkAdmin() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error("Not authenticated")
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error("Not authenticated")
   
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') {
+  const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+
+  if (profileError) {
+    throw new Error("Error fetching profile")
+  }
+
+  if (!profile || profile.role !== 'admin') {
     throw new Error("Unauthorized: Only admins can perform this action")
   }
   return user
