@@ -15,6 +15,15 @@ export default async function TasksPage() {
     .select('*, tasks(*, profiles!producer_id(name))')
     .order('created_at', { ascending: false })
 
+  // Pre-sort project tasks to avoid sorting inside render loop and string comparison avoids new Date allocations
+  if (projects) {
+    projects.forEach(p => {
+      if (p.tasks) {
+        p.tasks.sort((a, b) => (a.created_at < b.created_at ? -1 : (a.created_at > b.created_at ? 1 : 0)))
+      }
+    })
+  }
+
   // For Producers: Fetch all tasks (available + assigned)
   // To handle legacy tasks without projects, we use an outer join if needed, but since we are fetching from tasks directly it's fine.
   const { data: allTasks } = await supabase
@@ -390,7 +399,7 @@ export default async function TasksPage() {
                 
                 <h4 style={{ marginBottom: '12px', color: '#86868b' }}>Project Stages:</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {p.tasks?.sort((a,b) => new Date(a.created_at) - new Date(b.created_at)).map(t => (
+                  {p.tasks?.map(t => (
                     <div key={t.id} style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', borderLeft: `3px solid ${t.status === 'completed' ? 'var(--success)' : 'var(--warning)'}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                         <div>
