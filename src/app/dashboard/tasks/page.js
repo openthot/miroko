@@ -9,18 +9,26 @@ export default async function TasksPage() {
   const isAdmin = profile?.role === 'admin'
   const userSpecialization = profile?.specializations?.[0]
 
-  // For Admins: Fetch Projects and their associated Tasks
-  const { data: projects } = await supabase
-    .from('projects')
-    .select('*, tasks(*, profiles!producer_id(name))')
-    .order('created_at', { ascending: false })
+  let projects = []
+  let allTasks = []
 
-  // For Producers: Fetch all tasks (available + assigned)
-  // To handle legacy tasks without projects, we use an outer join if needed, but since we are fetching from tasks directly it's fine.
-  const { data: allTasks } = await supabase
-    .from('tasks')
-    .select('*, projects(*), profiles!producer_id(name)')
-    .order('created_at', { ascending: false })
+  if (isAdmin) {
+    // For Admins: Fetch Projects and their associated Tasks
+    const { data } = await supabase
+      .from('projects')
+      .select('*, tasks(*, profiles!producer_id(name))')
+      .order('created_at', { ascending: false })
+    projects = data || []
+  } else {
+    // For Producers: Fetch only relevant tasks (assigned to them OR unassigned and not completed)
+    // To handle legacy tasks without projects, we use an outer join if needed, but since we are fetching from tasks directly it's fine.
+    const { data } = await supabase
+      .from('tasks')
+      .select('*, projects(*), profiles!producer_id(name)')
+      .or(`producer_id.eq.${user.id},and(producer_id.is.null,status.neq.completed)`)
+      .order('created_at', { ascending: false })
+    allTasks = data || []
+  }
 
   // Admin: Create a new Project (opens Composer stage)
   async function createProject(formData) {
@@ -203,9 +211,23 @@ export default async function TasksPage() {
   const STAGES = ['Composer', 'Sound Designer', 'Arranger', 'FX Mixer', 'Mastering Engineer', 'Completed']
   const getNextStage = (current) => STAGES[STAGES.indexOf(current) + 1]
 
-  const myTasks = allTasks?.filter(t => t.producer_id === user.id) || []
-  const availableTasks = allTasks?.filter(t => !t.producer_id && t.stage?.includes(userSpecialization) && t.status !== 'completed') || []
-  const allOtherTasks = allTasks?.filter(t => !t.producer_id && !t.stage?.includes(userSpecialization) && t.status !== 'completed') || []
+  const myTasks = []
+  const availableTasks = []
+  const allOtherTasks = []
+
+  if (!isAdmin && allTasks) {
+    for (const t of allTasks) {
+      if (t.producer_id === user.id) {
+        myTasks.push(t)
+      } else if (!t.producer_id && t.status !== 'completed') {
+        if (t.stage?.includes(userSpecialization)) {
+          availableTasks.push(t)
+        } else {
+          allOtherTasks.push(t)
+        }
+      }
+    }
+  }
 
   return (
     <div className="animate-fade-in">
