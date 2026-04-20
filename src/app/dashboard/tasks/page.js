@@ -163,6 +163,12 @@ export default async function TasksPage() {
   async function revertTask(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error('Unauthorized')
+
+    const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profileError || profile?.role !== 'admin') throw new Error('Unauthorized')
+
     const task_id = formData.get('task_id')
     const edit_reason = formData.get('edit_reason')
     const new_deadline_days = parseInt(formData.get('new_deadline_days')) || 3
