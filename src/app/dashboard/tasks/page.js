@@ -36,6 +36,10 @@ export default async function TasksPage() {
     'use server'
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
     
     const stage_deadlines = {
       'Composer': parseInt(formData.get('deadline_Composer')) || 3,
@@ -78,6 +82,10 @@ export default async function TasksPage() {
     'use server'
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
     
     const stages = formData.getAll('specializations').join(', ')
     const deadlineDays = parseInt(formData.get('deadline_days')) || 3
@@ -100,13 +108,17 @@ export default async function TasksPage() {
   async function advanceStage(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
     const project_id = formData.get('project_id')
     const current_stage = formData.get('current_stage')
     const next_stage = formData.get('next_stage')
     const file_url = formData.get('file_url') // the returned file from the previous stage
     
-    const { data: { user } } = await supabase.auth.getUser()
-
     // Get the project's stage_deadlines
     const { data: project } = await supabase.from('projects').select('stage_deadlines').eq('id', project_id).single()
     const deadlineDays = project?.stage_deadlines?.[next_stage] || 3
@@ -150,6 +162,12 @@ export default async function TasksPage() {
   async function markProjectCompleted(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
     const project_id = formData.get('project_id')
     await supabase.from('projects').update({ status: 'completed', current_stage: 'Completed' }).eq('id', project_id)
     
@@ -163,6 +181,12 @@ export default async function TasksPage() {
   async function revertTask(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
     const task_id = formData.get('task_id')
     const edit_reason = formData.get('edit_reason')
     const new_deadline_days = parseInt(formData.get('new_deadline_days')) || 3
