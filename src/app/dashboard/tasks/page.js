@@ -150,6 +150,13 @@ export default async function TasksPage() {
   async function markProjectCompleted(formData) {
     'use server'
     const supabase = await createClient()
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) throw new Error('Unauthorized')
+
+    const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profileError || profile?.role !== 'admin') throw new Error('Unauthorized')
+
     const project_id = formData.get('project_id')
     await supabase.from('projects').update({ status: 'completed', current_stage: 'Completed' }).eq('id', project_id)
     
