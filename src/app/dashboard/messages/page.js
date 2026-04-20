@@ -57,9 +57,15 @@ export default async function MessagesPage({ searchParams }) {
     const recId = formData.get('receiver_id')
     const content = formData.get('content')
     
+    const finalReceiverId = recId === 'all' ? null : (recId || null);
+
+    if (!finalReceiverId && profile?.role !== 'admin') {
+      throw new Error('Unauthorized: Only admins can broadcast messages')
+    }
+
     await supabase.from('messages').insert({
       sender_id: user.id,
-      receiver_id: recId === 'all' ? null : recId,
+      receiver_id: finalReceiverId,
       content
     })
     
