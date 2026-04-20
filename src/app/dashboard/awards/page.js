@@ -14,6 +14,21 @@ export default async function AwardsPage() {
     'use server'
     const supabase = await createClient()
     
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      throw new Error('Not authenticated')
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile || profile.role !== 'admin') {
+      throw new Error('Unauthorized: Only admins can grant awards')
+    }
+
     await supabase.from('awards').insert({
       producer_id: formData.get('producer_id'),
       type: formData.get('type'),
