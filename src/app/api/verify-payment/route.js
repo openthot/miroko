@@ -50,6 +50,8 @@ export async function POST(req) {
 
          if (trustedFeature === 'premium_tier') {
            await supabase.from('profiles').update({ tier: 'premium' }).eq('id', user_id)
+         } else if (trustedFeature === 'social_unlock') {
+           await supabase.from('profiles').update({ social_unlocked: true }).eq('id', user_id)
          }
       }
 

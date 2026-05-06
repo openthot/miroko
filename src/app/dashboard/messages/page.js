@@ -9,6 +9,7 @@ export default async function MessagesPage({ searchParams }) {
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   const isAdmin = profile?.role === 'admin'
+  const isUnlocked = profile?.social_unlocked || isAdmin
 
   // Fetch recipients list
   let recipientsQuery = supabase.from('profiles').select('id, name').neq('id', user.id)
@@ -18,7 +19,13 @@ export default async function MessagesPage({ searchParams }) {
       recipientsQuery = recipientsQuery.ilike('name', `%${search}%`)
     }
   } else {
-    recipientsQuery = recipientsQuery.eq('role', 'admin')
+    // If unlocked, can message admins or producers who have also unlocked it.
+    // If not unlocked, can only message admins.
+    if (isUnlocked) {
+      recipientsQuery = recipientsQuery.or(`role.eq.admin,social_unlocked.eq.true`)
+    } else {
+      recipientsQuery = recipientsQuery.eq('role', 'admin')
+    }
   }
   const { data: recipients } = await recipientsQuery
 
@@ -52,7 +59,7 @@ export default async function MessagesPage({ searchParams }) {
     'use server'
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('role, social_unlocked').eq('id', user.id).single()
     
     const recId = formData.get('receiver_id')
     const content = formData.get('content')
@@ -61,6 +68,14 @@ export default async function MessagesPage({ searchParams }) {
 
     if (!finalReceiverId && profile?.role !== 'admin') {
       throw new Error('Unauthorized: Only admins can broadcast messages')
+    }
+
+    // Check if non-admin is trying to send to another producer without unlock
+    if (finalReceiverId && profile?.role !== 'admin' && !profile?.social_unlocked) {
+      const { data: targetProfile } = await supabase.from('profiles').select('role').eq('id', finalReceiverId).single()
+      if (targetProfile?.role !== 'admin') {
+        throw new Error('Unauthorized: Must unlock social features to DM non-admins')
+      }
     }
 
     await supabase.from('messages').insert({
