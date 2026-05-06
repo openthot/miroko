@@ -4,4 +4,5 @@ export const FEATURE_PRICES = {
   project_withdrawal: 80,
   main_artist_credit: 800,
   premium_tier: 1600,
+  social_unlock: 80,
 }

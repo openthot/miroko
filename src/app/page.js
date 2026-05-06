@@ -116,6 +116,17 @@ export default async function Home() {
               <h3 style={{ fontSize: 24, marginBottom: 12 }}>Multiple Admins</h3>
               <p style={{ color: '#86868b', lineHeight: 1.5 }}>Easily manage and configure your team with multi-admin support in the Supabase backend.</p>
             </div>
+
+            <div className="glass-panel" style={{ padding: 40, border: 'none', background: 'var(--background)', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--primary)', color: 'white', padding: '4px 12px', fontSize: '12px', fontWeight: 'bold', borderBottomLeftRadius: '12px' }}>
+                Just ₹80
+              </div>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,113,227,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              </div>
+              <h3 style={{ fontSize: 24, marginBottom: 12 }}>Community Network</h3>
+              <p style={{ color: '#86868b', lineHeight: 1.5 }}>Unlock the power of our exclusive producer network. Connect, share your work in a Twitter-style feed, and DM top talent for a one-time seamless payment via Razorpay.</p>
+            </div>
           </div>
         </div>
       </section>

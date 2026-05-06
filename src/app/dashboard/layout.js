@@ -33,6 +33,7 @@ export default async function DashboardLayout({ children }) {
           {isAdmin && (
             <Link href="/dashboard/users" className="nav-link">Users</Link>
           )}
+          <Link href="/dashboard/network" className="nav-link">Network</Link>
           <Link href="/dashboard/notifications" className="nav-link">Notifications</Link>
           <Link href="/dashboard/tasks" className="nav-link">Tasks</Link>
           <Link href="/dashboard/statistics" className="nav-link">Statistics</Link>
