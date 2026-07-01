@@ -310,6 +310,7 @@ export default async function TasksPage() {
 
   // Helper arrays for stage progression
   const STAGES = ['Composer', 'Sound Designer', 'Arranger', 'FX Mixer', 'Mastering Engineer', 'Completed']
+  const ACTIVE_STAGES = STAGES.filter(s => s !== 'Completed')
   const getNextStage = (current) => STAGES[STAGES.indexOf(current) + 1]
 
   const myTasks = allTasks?.filter(t => t.producer_id === user.id) || []
@@ -342,7 +343,7 @@ export default async function TasksPage() {
             <div className="input-group" style={{ marginBottom: '8px' }}>
               <label style={{ marginBottom: '12px', display: 'block' }}>Stage Deadlines (Days)</label>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                {STAGES.filter(s => s !== 'Completed').map(st => (
+                {ACTIVE_STAGES.map(st => (
                   <div key={st} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <label style={{ fontSize: '14px', width: '120px' }}>{st}</label>
                     <input type="number" name={`deadline_${st}`} className="input-control" defaultValue={3} min={1} style={{ width: '80px', padding: '4px' }} />
@@ -369,7 +370,7 @@ export default async function TasksPage() {
             <div className="input-group" style={{ marginBottom: '8px' }}>
               <label style={{ marginBottom: '12px', display: 'block' }}>Target Specializations</label>
               <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                {STAGES.filter(s => s !== 'Completed').map(st => (
+                {ACTIVE_STAGES.map(st => (
                   <label key={st} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <input type="checkbox" name="specializations" value={st} />
                     <span style={{ fontSize: '14px' }}>{st}</span>
