@@ -17,8 +17,11 @@ export default async function NotificationsPage() {
   async function markAsRead(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) throw new Error('Unauthorized')
+
     const notification_id = formData.get('notification_id')
-    await supabase.from('notifications').update({ is_read: true }).eq('id', notification_id)
+    await supabase.from('notifications').update({ is_read: true }).eq('id', notification_id).eq('user_id', user.id)
     revalidatePath('/dashboard/notifications')
   }
 

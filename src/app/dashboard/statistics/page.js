@@ -12,8 +12,22 @@ export default async function StatisticsPage() {
   async function uploadStats(formData) {
     'use server'
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
     
+    if (userError || !user) {
+      throw new Error('Unauthorized')
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || profile?.role !== 'admin') {
+      throw new Error('Unauthorized')
+    }
+
     await supabase.from('statistics').insert({
       admin_id: user.id,
       title: formData.get('title'),
