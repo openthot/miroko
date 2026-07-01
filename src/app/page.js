@@ -7,142 +7,188 @@ export default async function Home() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div className="landing-page-container" style={{ position: 'relative', overflow: 'hidden' }}>
-      {/* Background Blobs */}
-      <div className="bg-blobs-container">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-        <div className="blob blob-3"></div>
+    <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: 'var(--background)' }}>
+
+      {/* Top Banner */}
+      <div style={{
+        background: 'var(--foreground)',
+        color: 'var(--background)',
+        textAlign: 'center',
+        padding: '12px 20px',
+        fontSize: '12px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em'
+      }}>
+        The studio manager for modern producers
       </div>
 
       {/* Navigation */}
-      <nav className="glass-panel" style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        width: '100%', 
+      <nav style={{
         display: 'flex', 
-        justifyContent: 'center', 
+        justifyContent: 'space-between',
         alignItems: 'center', 
-        zIndex: 100, 
-        borderRadius: 0,
-        borderTop: 'none',
-        borderLeft: 'none',
-        borderRight: 'none',
-        height: '44px',
-        padding: '0 20px',
-        background: 'var(--surface)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)'
+        padding: '24px 40px',
+        borderBottom: '1px solid var(--surface-border)',
+        background: 'var(--background)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
       }}>
-        <div style={{ width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontWeight: 600, fontSize: 17, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 22, height: 22, background: 'var(--foreground)', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--background)', fontSize: 12 }}>M</div>
-            Miroko
+        <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+          <div style={{ width: '40px', height: '40px', color: 'var(--foreground)' }}>
+            <img src="/logo.svg" alt="Miroko Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
-          <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-            <Link href="/pricing" style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground)', opacity: 0.8 }}>Pricing</Link>
-            {user ? (
-              <Link href="/dashboard" style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground)', opacity: 0.8 }}>Dashboard</Link>
-            ) : (
-              <Link href="/login" style={{ fontSize: 12, fontWeight: 400, color: 'var(--foreground)', opacity: 0.8 }}>Log in</Link>
-            )}
+          <div style={{ display: 'flex', gap: '24px', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}>
+             <Link href="/" style={{ opacity: 0.8 }}>Home</Link>
+             <Link href="/pricing" style={{ opacity: 0.8 }}>Pricing</Link>
           </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'center', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500 }}>
+          {user ? (
+            <Link href="/dashboard" style={{ opacity: 0.8 }}>Dashboard</Link>
+          ) : (
+            <Link href="/login" style={{ opacity: 0.8 }}>Log in</Link>
+          )}
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section style={{ paddingTop: 180, paddingBottom: 100, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh', justifyContent: 'center' }}>
-        <h1 className="page-title animate-fade-in" style={{ fontSize: '72px', maxWidth: 900, marginBottom: 24, letterSpacing: '-0.04em', lineHeight: 1.05 }}>
-          The studio manager<br/>for modern producers.
+      <section style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '120px 20px',
+        textAlign: 'center',
+        minHeight: '70vh'
+      }}>
+        <h1 className="animate-fade-in" style={{
+          fontSize: 'clamp(40px, 6vw, 72px)',
+          fontWeight: 400,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.1,
+          maxWidth: '900px',
+          marginBottom: '24px'
+        }}>
+          Mental clarity and elevated workflows,<br />powered by Miroko.
         </h1>
-        <p className="auth-subtitle animate-fade-in" style={{ fontSize: 24, maxWidth: 600, marginBottom: 48, lineHeight: 1.4, animationDelay: '0.1s' }}>
-          Manage tasks, handle seamless payments, and communicate with your team in one beautiful workspace.
+        <p className="animate-fade-in" style={{
+          fontSize: '18px',
+          maxWidth: '600px',
+          marginBottom: '48px',
+          lineHeight: 1.5,
+          opacity: 0.7,
+          animationDelay: '0.1s'
+        }}>
+          Functional delights made by producers. Manage tasks, handle seamless payments, and communicate with your team in one beautiful workspace.
         </p>
-        <div className="animate-fade-in" style={{ display: 'flex', gap: 16, animationDelay: '0.2s' }}>
-           <Link href={user ? "/dashboard" : "/login"} className="btn btn-primary" style={{ fontSize: 17, padding: '16px 32px' }}>
+
+        <div className="animate-fade-in" style={{ display: 'flex', gap: '16px', animationDelay: '0.2s' }}>
+           <Link href={user ? "/dashboard" : "/login"} className="btn btn-primary">
              Get Started Free
            </Link>
-           <Link href="/pricing" className="btn btn-secondary" style={{ fontSize: 17, padding: '16px 32px' }}>
+           <Link href="/pricing" className="btn btn-secondary">
              View Pricing
            </Link>
         </div>
+      </section>
 
-        {/* Product Illustration */}
-        <div className="animate-fade-in" style={{ marginTop: 80, width: '100%', maxWidth: 1200, padding: '0 20px', animationDelay: '0.3s' }}>
-          <div className="glass-panel" style={{ padding: 8, borderRadius: 'var(--radius-xl)' }}>
-            <Image 
-              src="/product-illustration.png" 
-              alt="Miroko Dashboard" 
-              width={1600} 
-              height={900} 
-              style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-lg)', display: 'block' }} 
-              priority
-            />
+      {/* Image / Ethos Section */}
+      <section style={{ padding: '0 40px 120px 40px' }}>
+        <div style={{
+          width: '100%',
+          height: '600px',
+          position: 'relative',
+          borderRadius: 'var(--radius-lg)',
+          overflow: 'hidden'
+        }}>
+          <img
+            src="https://images.unsplash.com/photo-1600607686527-6fb886090705?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
+            alt="Minimal Studio Workspace"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+          <div style={{
+            position: 'absolute',
+            bottom: '40px',
+            left: '40px',
+            color: '#fff',
+            maxWidth: '500px'
+          }}>
+             <h2 style={{ fontSize: '32px', fontWeight: 400, marginBottom: '16px' }}>Connecting you to a new level of care.</h2>
+             <p style={{ opacity: 0.9, lineHeight: 1.5 }}>
+               Tap into your best state of mind with us. The everyday ritual of functional management.
+             </p>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section style={{ padding: '100px 20px', background: 'var(--secondary)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 80 }}>
-            <h2 style={{ fontSize: 48, letterSpacing: '-0.03em', marginBottom: 16 }}>Everything you need. <br/> Nothing you don't.</h2>
-            <p className="auth-subtitle" style={{ fontSize: 20 }}>Designed specifically for the workflow of creative professionals.</p>
+      {/* Features Grid */}
+      <section style={{ padding: '0 40px 120px 40px', background: 'var(--background)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '80px' }}>
+            <h2 style={{ fontSize: '40px', fontWeight: 400, letterSpacing: '-0.02em', marginBottom: '16px' }}>Our Science</h2>
+            <p style={{ fontSize: '18px', opacity: 0.7 }}>A new era of wellbeing made by a team of neuroscientists and functional health doctors harnessing plant technology.</p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', maxWidth: '1200px', margin: '0 auto' }}>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--secondary)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '24px' }}>
+               <img src="https://images.unsplash.com/photo-1518609878373-06d740f60d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Secure" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: 500, marginBottom: '8px' }}>Secure by default</h3>
+            <p style={{ opacity: 0.7, fontSize: '15px', lineHeight: 1.5 }}>Enterprise-grade security powered by Supabase.</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32 }}>
-            <div className="glass-panel" style={{ padding: 40, border: 'none', background: 'var(--background)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,113,227,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              </div>
-              <h3 style={{ fontSize: 24, marginBottom: 12 }}>Secure by default</h3>
-              <p style={{ color: '#86868b', lineHeight: 1.5 }}>Enterprise-grade security powered by Supabase. Your data is encrypted and protected.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--secondary)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '24px' }}>
+               <img src="https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Task Management" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-
-            <div className="glass-panel" style={{ padding: 40, border: 'none', background: 'var(--background)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,113,227,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-              </div>
-              <h3 style={{ fontSize: 24, marginBottom: 12 }}>Task Management</h3>
-              <p style={{ color: '#86868b', lineHeight: 1.5 }}>Assign tasks, track progress, and manage deliverables effortlessly with your producers.</p>
-            </div>
-
-            <div className="glass-panel" style={{ padding: 40, border: 'none', background: 'var(--background)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,113,227,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-              </div>
-              <h3 style={{ fontSize: 24, marginBottom: 12 }}>Multiple Admins</h3>
-              <p style={{ color: '#86868b', lineHeight: 1.5 }}>Easily manage and configure your team with multi-admin support in the Supabase backend.</p>
-            </div>
-
-            <div className="glass-panel" style={{ padding: 40, border: 'none', background: 'var(--background)', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--primary)', color: 'white', padding: '4px 12px', fontSize: '12px', fontWeight: 'bold', borderBottomLeftRadius: '12px' }}>
-                Just ₹80
-              </div>
-              <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(0,113,227,0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              </div>
-              <h3 style={{ fontSize: 24, marginBottom: 12 }}>Community Network</h3>
-              <p style={{ color: '#86868b', lineHeight: 1.5 }}>Unlock the power of our exclusive producer network. Connect, share your work in a Twitter-style feed, and DM top talent for a one-time seamless payment via Razorpay.</p>
-            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: 500, marginBottom: '8px' }}>Task Management</h3>
+            <p style={{ opacity: 0.7, fontSize: '15px', lineHeight: 1.5 }}>Assign tasks, track progress, and manage deliverables.</p>
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <div style={{ width: '100%', aspectRatio: '1/1', background: 'var(--secondary)', borderRadius: 'var(--radius-md)', overflow: 'hidden', marginBottom: '24px' }}>
+               <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Network" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <h3 style={{ fontSize: '20px', fontWeight: 500, marginBottom: '8px' }}>Community Network</h3>
+            <p style={{ opacity: 0.7, fontSize: '15px', lineHeight: 1.5 }}>Unlock the power of our exclusive producer network.</p>
+          </div>
+
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={{ padding: '60px 20px', borderTop: '1px solid var(--surface-border)', textAlign: 'center', color: '#86868b' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--foreground)', fontWeight: 500 }}>
-            <div style={{ width: 24, height: 24, background: 'var(--foreground)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--background)', fontSize: 12 }}>M</div>
-            Miroko
+      <footer style={{
+        padding: '60px 40px',
+        borderTop: '1px solid var(--surface-border)',
+        color: 'var(--foreground)'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '20px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+             <div style={{ width: '32px', height: '32px', color: 'var(--foreground)' }}>
+               <img src="/logo.svg" alt="Miroko Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+             </div>
+             <span style={{ fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '14px' }}>Miroko</span>
           </div>
-          <p>© {new Date().getFullYear()} Miroko. All rights reserved.</p>
-          <div style={{ display: 'flex', gap: 24 }}>
-             <Link href="/pricing" style={{ transition: 'color 0.2s', ':hover': { color: 'var(--foreground)' } }}>Pricing</Link>
-             <Link href="/login" style={{ transition: 'color 0.2s', ':hover': { color: 'var(--foreground)' } }}>Log in</Link>
+
+          <div style={{ display: 'flex', gap: '32px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.7 }}>
+             <Link href="/">Home</Link>
+             <Link href="/pricing">Pricing</Link>
+             <Link href="/login">Log in</Link>
           </div>
+        </div>
+        <div style={{ maxWidth: '1200px', margin: '40px auto 0', textAlign: 'center', fontSize: '12px', opacity: 0.5 }}>
+          © {new Date().getFullYear()} Miroko. All Rights Reserved.
         </div>
       </footer>
     </div>
