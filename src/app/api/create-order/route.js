@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import Razorpay from 'razorpay'
+import { FEATURE_PRICES } from '@/utils/pricing'
 
 export async function POST(req) {
   try {
@@ -12,13 +13,20 @@ export async function POST(req) {
 
     const razorpay = new Razorpay({ key_id, key_secret })
 
-    const { amount, currency = 'INR', receipt = 'rcpt_' + Date.now() } = await req.json()
+    const { feature, currency = 'INR', receipt = 'rcpt_' + Date.now() } = await req.json()
+
+    if (!feature || !FEATURE_PRICES[feature]) {
+      return NextResponse.json({ error: 'Invalid feature requested.' }, { status: 400 })
+    }
+
+    const expectedAmount = FEATURE_PRICES[feature]
 
     // Create an order via Razorpay SDK
     const options = {
-      amount: amount * 100, // INR in paise
+      amount: expectedAmount * 100, // INR in paise
       currency,
-      receipt
+      receipt,
+      notes: { feature }
     }
 
     const order = await razorpay.orders.create(options)

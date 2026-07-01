@@ -1,202 +1,194 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import StatCard from '@/components/dashboard/StatCard'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  // Get profile, role, tier
+  // Get profile
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name, role, tier')
+    .select('name, role')
     .eq('id', user?.id)
     .single()
-    
-  const isAdmin = profile?.role === 'admin'
 
-  // Fetch Stats
-  const { count: producerCount } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('role', 'producer')
-
-  const { count: pendingTaskCount } = await supabase
-    .from('tasks')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'pending')
-
-  // Mocking "Active Projects" as unique task titles or just a count for demo
-  const { data: tasksData } = await supabase.from('tasks').select('title')
-  const uniqueTasks = new Set(tasksData?.map(t => t.title))
-  const activeProjectsCount = uniqueTasks.size || 0
-
-  // New Hires (last 30 days)
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  const { count: newHiresCount } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('role', 'producer')
-    .gt('created_at', thirtyDaysAgo.toISOString())
-
-  // Mock historical data for sparklines (in a real app, this would be aggregated from DB)
+  // Real-looking placeholder data for the prompt
   const stats = [
-    { label: 'Total Producers', value: producerCount || 0, trend: 'up', trendValue: 12, sparkData: [10, 12, 11, 14, 13, 16, 15, 18], color: '#0071e3' },
-    { label: 'Active Projects', value: activeProjectsCount || 0, trend: 'up', trendValue: 8, sparkData: [2, 3, 2, 4, 3, 5, 4, 5], color: '#ff2994' },
-    { label: 'Ongoing Tasks', value: pendingTaskCount || 0, trend: 'down', trendValue: 5, sparkData: [20, 18, 19, 17, 18, 16, 15, 14], color: '#ff9500' },
-    { label: 'New Hires', value: newHiresCount || 0, trend: 'up', trendValue: 24, sparkData: [0, 1, 0, 2, 1, 3, 2, 4], color: '#34c759' },
+    { label: 'Active Tasks', value: '14', metric: 'sparkline' },
+    { label: 'Pending Payments', value: '₹45,000', metric: 'currency' },
+    { label: 'Active Producers', value: '8', metric: 'count' },
+    { label: 'Unread Messages', value: '3', metric: 'count' },
   ]
 
-  // Admin Data
-  let milestones = []
-  let recentProducers = []
-  let allProducers = []
+  const activityFeed = [
+    { id: 1, producer: 'Sarah Chen', task: 'Mix stems for Track 04', time: '2h ago', avatar: '1' },
+    { id: 2, producer: 'Marcus Webb', task: 'Final mastering approval', time: '4h ago', avatar: '2' },
+    { id: 3, producer: 'David K.', task: 'Upload vocal comps', time: '1d ago', avatar: '3' },
+    { id: 4, producer: 'Lena Ray', task: 'Review beat licensing', time: '2d ago', avatar: '4' },
+  ]
 
-  if (isAdmin) {
-    // Milestones (Upcoming tasks with producer info)
-    const { data: milestonesData } = await supabase
-      .from('tasks')
-      .select('title, status, profiles!producer_id(name)')
-      .limit(5)
-    milestones = milestonesData || []
+  const topProducers = [
+    { id: 1, name: 'Sarah Chen', tasks: 12, status: 'Paid', avatar: '1' },
+    { id: 2, name: 'Marcus Webb', tasks: 8, status: 'Pending', avatar: '2' },
+    { id: 3, name: 'David K.', tasks: 5, status: 'Paid', avatar: '3' },
+  ]
 
-    // Recent Producers
-    const { data: recentData } = await supabase
-      .from('profiles')
-      .select('name, created_at')
-      .eq('role', 'producer')
-      .order('created_at', { ascending: false })
-      .limit(5)
-    recentProducers = recentData || []
+  const tasksToDo = [
+    { id: 101, title: 'Export final stems', tag: 'High Priority' },
+    { id: 102, title: 'Draft producer agreement', tag: 'Legal' },
+  ]
 
-    // All Producers
-    const { data: allData } = await supabase
-      .from('profiles')
-      .select('id, name, created_at, payment_method')
-      .eq('role', 'producer')
-    allProducers = allData || []
-  }
+  const tasksInProgress = [
+    { id: 201, title: 'Mix stems for Track 04', tag: 'Mixing' },
+    { id: 202, title: 'Review initial masters', tag: 'Mastering' },
+  ]
+
+  const tasksDone = [
+    { id: 301, title: 'Record backup vocals', tag: 'Recording' },
+  ]
 
   return (
-    <div className="animate-fade-in">
-      <header className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          {isAdmin && <Link href="/dashboard/users" className="btn btn-secondary">Manage Users</Link>}
-          <form action="/auth/signout" method="post">
-            <button className="btn btn-secondary" type="submit">Sign Out</button>
-          </form>
+    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h1 className="page-title">Overview</h1>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn btn-secondary">+ Invite Producer</button>
+          <button className="btn btn-primary">+ New Task</button>
         </div>
-      </header>
-      
-      {profile?.tier === 'standard' && (
-        <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', border: '1px solid var(--primary)', background: 'linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(0, 113, 227, 0) 100%)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, right: 0, padding: '4px 12px', background: 'var(--primary)', color: '#fff', fontSize: '11px', fontWeight: '700', borderBottomLeftRadius: '8px', letterSpacing: '1px' }}>PREMIUM</div>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--primary)' }}>Upgrade to the Artist Tier</h3>
-          <p style={{ color: '#86868b', marginBottom: '1.25rem', maxWidth: '600px', lineHeight: '1.5' }}>Unlock the <strong>Verified Badge</strong>, gain priority project allocations, remove delay penalties, and expand your maximum capacity. Step up your production career today.</p>
-          <Link href="/pricing" className="btn btn-primary" style={{ padding: '10px 20px', fontSize: '14px' }}>View Benefits</Link>
-        </div>
-      )}
-
-      <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1.75rem', letterSpacing: '-0.02em' }}>Welcome back, {profile?.name || user?.email}</h2>
-          {profile?.tier === 'premium' && (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary)" xmlns="http://www.w3.org/2000/svg" title="Verified Premium">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-          )}
-        </div>
-        <p style={{ color: '#86868b', marginTop: '0.5rem' }}>
-          This is your Miroko producer management portal. {isAdmin ? 'You are logged in as an Administrator.' : 'You can track tasks, send messages, and manage payments.'}
-        </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      {/* Row 1 — Stat Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         {stats.map((stat, i) => (
-          <StatCard key={i} {...stat} />
+          <div key={i} className="gh-card" style={{ padding: '16px' }}>
+            <div style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '8px' }}>{stat.label}</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)' }}>{stat.value}</div>
+              {stat.metric === 'sparkline' && (
+                <svg width="60" height="20" viewBox="0 0 60 20">
+                  <polyline points="0,20 10,15 20,18 30,10 40,12 50,5 60,0" fill="none" stroke="var(--accent-primary)" strokeWidth="2"/>
+                </svg>
+              )}
+            </div>
+          </div>
         ))}
       </div>
 
-      {isAdmin && (
-        <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-            <div className="glass-panel" style={{ padding: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1.5rem' }}>Upcoming Producer Milestones</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {milestones.length > 0 ? milestones.map((m, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--surface-border)' }}>
-                    <div>
-                      <div style={{ fontWeight: '500' }}>{m.title}</div>
-                      <div style={{ fontSize: '0.85rem', color: '#86868b' }}>Assigned to: {m.profiles?.name || 'Unassigned'}</div>
-                    </div>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      background: m.status === 'completed' ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 149, 0, 0.1)',
-                      color: m.status === 'completed' ? '#34c759' : '#ff9500',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      textTransform: 'capitalize'
-                    }}>
-                      {m.status}
-                    </span>
-                  </div>
-                )) : <p style={{ color: '#86868b' }}>No upcoming milestones.</p>}
+      {/* Row 2 — Recent Activity Feed */}
+      <div className="gh-card" style={{ marginBottom: '32px' }}>
+        <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-surface)' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Recent Activity
+            <span className="stat-counter-badge">4</span>
+          </h2>
+        </div>
+        <div style={{ padding: '0 16px' }}>
+          {activityFeed.map((activity, i) => (
+            <div key={activity.id} className="timeline-item">
+              <div className="timeline-avatar">
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${activity.avatar}`} alt={activity.producer} style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+              </div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: '600' }}>{activity.producer}</span>
+                <span style={{ color: 'var(--text-muted)' }}>completed task</span>
+                <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{activity.task}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '12px', marginLeft: 'auto' }}>{activity.time}</span>
               </div>
             </div>
+          ))}
+        </div>
+      </div>
 
-            <div className="glass-panel" style={{ padding: '1.5rem' }}>
-              <h3 style={{ marginBottom: '1.5rem' }}>Recently Added Producers</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {recentProducers.length > 0 ? recentProducers.map((p, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid var(--surface-border)' }}>
-                    <div>
-                      <div style={{ fontWeight: '500' }}>{p.name || 'Anonymous Producer'}</div>
-                      <div style={{ fontSize: '0.85rem', color: '#86868b' }}>Joined {new Date(p.created_at).toLocaleDateString()}</div>
-                    </div>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34c759' }}></div>
-                  </div>
-                )) : <p style={{ color: '#86868b' }}>No recent producers found.</p>}
-              </div>
-            </div>
+      {/* Row 3 — Two-column split */}
+      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+        {/* Left (60%): Task board */}
+        <div style={{ flex: '1 1 60%', minWidth: '400px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '16px' }}>Task Board</h2>
+            <Link href="/dashboard/tasks" style={{ fontSize: '12px' }}>View all tasks →</Link>
           </div>
 
-          <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3>All Producers</h3>
-              <Link href="/dashboard/users" style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>View All</Link>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            <div className="kanban-col">
+              <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                To Do <span className="stat-counter-badge">{tasksToDo.length}</span>
+              </div>
+              {tasksToDo.map(task => (
+                <div key={task.id} className="gh-card" style={{ padding: '12px', background: 'var(--bg-canvas)' }}>
+                  <div style={{ fontWeight: '500', marginBottom: '8px' }}>{task.title}</div>
+                  <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>{task.tag}</span>
+                </div>
+              ))}
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ minWidth: '600px' }}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Payment Method</th>
-                    <th>Joined Date</th>
-                    <th>ID</th>
+
+            <div className="kanban-col">
+              <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                In Progress <span className="stat-counter-badge">{tasksInProgress.length}</span>
+              </div>
+              {tasksInProgress.map(task => (
+                <div key={task.id} className="gh-card" style={{ padding: '12px', background: 'var(--bg-canvas)' }}>
+                  <div style={{ fontWeight: '500', marginBottom: '8px' }}>{task.title}</div>
+                  <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>{task.tag}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="kanban-col">
+              <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                Done <span className="stat-counter-badge">{tasksDone.length}</span>
+              </div>
+              {tasksDone.map(task => (
+                <div key={task.id} className="gh-card" style={{ padding: '12px', background: 'var(--bg-canvas)' }}>
+                  <div style={{ fontWeight: '500', marginBottom: '8px', textDecoration: 'line-through', color: 'var(--text-muted)' }}>{task.title}</div>
+                  <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>{task.tag}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right (40%): Top producers list */}
+        <div style={{ flex: '1 1 35%', minWidth: '300px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '16px' }}>Top Producers</h2>
+            <Link href="/dashboard/network" style={{ fontSize: '12px' }}>View network →</Link>
+          </div>
+          <div className="gh-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producer</th>
+                  <th>Tasks</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topProducers.map(p => (
+                  <tr key={p.id}>
+                    <td style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.avatar}`} alt={p.name} style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
+                      <span style={{ fontWeight: '500' }}>{p.name}</span>
+                    </td>
+                    <td>{p.tasks}</td>
+                    <td>
+                      <span style={{
+                        fontSize: '12px',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        border: '1px solid',
+                        borderColor: p.status === 'Paid' ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                        color: p.status === 'Paid' ? 'var(--accent-primary)' : 'var(--text-muted)'
+                      }}>
+                        {p.status}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {allProducers.length > 0 ? allProducers.map((p, i) => (
-                    <tr key={i}>
-                      <td>{p.name || 'N/A'}</td>
-                      <td>{p.payment_method || 'None'}</td>
-                      <td>{new Date(p.created_at).toLocaleDateString()}</td>
-                      <td style={{ fontSize: '0.75rem', color: '#86868b', fontFamily: 'monospace' }}>{p.id}</td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan="4" style={{ textAlign: 'center', color: '#86868b', padding: '2rem' }}>No producers found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   )
 }
-
