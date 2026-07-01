@@ -17,14 +17,23 @@ export default async function NotificationsPage() {
   async function markAsRead(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error || !user) throw new Error('Unauthorized')
+
     const notification_id = formData.get('notification_id')
-    await supabase.from('notifications').update({ is_read: true }).eq('id', notification_id)
+    await supabase.from('notifications').update({ is_read: true }).eq('id', notification_id).eq('user_id', user.id)
     revalidatePath('/dashboard/notifications')
   }
 
   async function sendNotification(formData) {
     'use server'
     const supabase = await createClient()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) throw new Error('Unauthorized')
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
     await supabase.from('notifications').insert({
       title: formData.get('title'),
       message: formData.get('message'),
